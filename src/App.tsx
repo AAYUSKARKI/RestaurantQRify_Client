@@ -1,10 +1,37 @@
-import { Button } from "@/components/ui/button"
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Home from '@/pages/Home';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import type { RootState } from './store';
+import { getMe } from './store/authSlice';
+import { useEffect } from 'react';
+import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import DashboardLayout from '@/components/dashboard/DashboardLayout';
+import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 
 function App() {
+  const dispatch = useAppDispatch();
+  const { user, loading } = useAppSelector((state: RootState) => state.auth);
+
+  if (loading) {
+    return <LoadingOverlay />
+  }
+  useEffect(() => {
+    if (user) {
+      dispatch(getMe());
+    }
+  }, [dispatch]);
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardLayout />
+          </ProtectedRoute>
+        } />
+      </Routes>
+    </Router>
   )
 }
 
