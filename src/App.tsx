@@ -5,10 +5,10 @@ import type { RootState } from './store';
 import { getMe } from './store/slices/authSlice';
 import { useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { Login } from './components/auth/Login';
 import Register from './components/auth/Register';
+import DashboardPage from './components/dashboard/Dashboard';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -36,7 +36,7 @@ function App() {
         } />
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <DashboardLayout />
+            <DashboardPage />
           </ProtectedRoute>
         } />
       </Routes>
