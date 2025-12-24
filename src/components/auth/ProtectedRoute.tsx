@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-    const { user, loading } = useAppSelector((state: RootState) => state.user);
+    const { user, loading } = useAppSelector((state: RootState) => state.auth);
     const location = useLocation();
 
     // 1. Handle Loading State

@@ -12,6 +12,11 @@ export interface User {
     forgotPasswordTokenExpiresAt: Date | null;
 }
 
+export interface LoginUser {
+    email: string;
+    password: string;
+}
+
 export interface AuthResponse {
     message: string;
     data: {

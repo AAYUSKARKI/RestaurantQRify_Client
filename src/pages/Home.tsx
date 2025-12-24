@@ -1,11 +1,27 @@
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import { Login } from "@/components/auth/Login";
 
-function Home() {
+export default function Home() {
+  const navigate = useNavigate();
+  const { user, loading } = useAppSelector((state) => state.auth);
+  
+  const isAuthenticated = !!user;
+
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  if (isAuthenticated) {
+    return null;
+  }
+
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center">
-      <Button>Click me</Button>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+       <Login/>
     </div>
-  )
+  );
 }
-
-export default Home

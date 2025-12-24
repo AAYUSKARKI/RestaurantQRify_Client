@@ -7,24 +7,33 @@ import { useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
 import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
+import { Login } from './components/auth/Login';
+import Register from './components/auth/Register';
 
 function App() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state: RootState) => state.auth);
 
-  if (loading) {
-    return <LoadingOverlay />
-  }
   useEffect(() => {
     if (user) {
       dispatch(getMe());
     }
   }, [dispatch]);
 
+  if (loading) {
+    return <LoadingOverlay />
+  }
+
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/" element={
+          <ProtectedRoute>
+            <Home />
+          </ProtectedRoute>
+        } />
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardLayout />

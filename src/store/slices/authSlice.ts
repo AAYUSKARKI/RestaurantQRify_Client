@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { api } from "@/utils/api";
 import toast from "react-hot-toast";
-import type { AuthResponse, AuthState, User } from "@/types/Auth";
+import type { AuthResponse, AuthState, LoginUser, User } from "@/types/Auth";
 
 const initialState: AuthState = {
     user: null,
@@ -26,7 +26,7 @@ export const registerUser = createAsyncThunk<User, any, { rejectValue: string }>
 
 export const loginUser = createAsyncThunk<User, any, { rejectValue: string }>(
     "auth/login",
-    async (data, { rejectWithValue }) => {
+    async (data: LoginUser, { rejectWithValue }) => {
         try {
             const response = await api.post<AuthResponse>("/user/login", data);
             const { accessToken, user } = response.data.data;
