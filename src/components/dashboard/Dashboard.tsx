@@ -10,7 +10,7 @@ export default function DashboardPage() {
 
   const totalRevenue = mockBills.reduce((sum, bill) => sum + Number(bill.grandTotal), 0)
   const occupiedTables = mockTables.filter((t) => t.status === "OCCUPIED").length
-  const pendingOrders = mockOrders.filter((o) => o.status === "pending").length
+  const pendingOrders = mockOrders.filter((o) => o.status === "PENDING").length
   const activeOrders = mockOrders.length
 
   const stats = [

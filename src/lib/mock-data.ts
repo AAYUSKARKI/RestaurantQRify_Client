@@ -1,3 +1,5 @@
+import type { AuditLog } from "@/types/Auditlog"
+
 // Mock data for restaurant management system
 export const mockUsers = [
   {
@@ -149,42 +151,42 @@ export const mockOrders = [
   {
     id: "1",
     tableId: "2",
-    status: "preparing" as const,
+    status: "PREPARING" as const, // Change to UPPERCASE
     placedBy: "Guest 1",
     notes: "No onions please",
     createdAt: new Date("2025-01-15T12:30:00"),
     createdBy: "3",
     items: [
-      { menuItemId: "3", name: "Grilled Salmon", quantity: 2, price: 24.99 },
-      { menuItemId: "8", name: "Fresh Orange Juice", quantity: 2, price: 4.99 },
+      { id: "i1", menuItemId: "3", name: "Grilled Salmon", quantity: 2, price: 24.99 }, // Added id
+      { id: "i2", menuItemId: "8", name: "Fresh Orange Juice", quantity: 2, price: 4.99 }, // Added id
     ],
     total: 59.96,
   },
   {
     id: "2",
     tableId: "5",
-    status: "ready" as const,
+    status: "READY" as const, // Change to UPPERCASE
     placedBy: "Guest 2",
     notes: "",
     createdAt: new Date("2025-01-15T13:00:00"),
     createdBy: "3",
     items: [
-      { menuItemId: "4", name: "Beef Steak", quantity: 1, price: 29.99 },
-      { menuItemId: "1", name: "Caesar Salad", quantity: 1, price: 8.99 },
+      { id: "i3", menuItemId: "4", name: "Beef Steak", quantity: 1, price: 29.99 },
+      { id: "i4", menuItemId: "1", name: "Caesar Salad", quantity: 1, price: 8.99 },
     ],
     total: 38.98,
   },
   {
     id: "3",
     tableId: "2",
-    status: "pending" as const,
+    status: "PENDING" as const, // Change to UPPERCASE
     placedBy: "Guest 3",
     notes: "Birthday celebration",
     createdAt: new Date("2025-01-15T13:15:00"),
     createdBy: "3",
     items: [
-      { menuItemId: "5", name: "Pasta Primavera", quantity: 3, price: 16.99 },
-      { menuItemId: "6", name: "Chocolate Lava Cake", quantity: 3, price: 7.99 },
+      { id: "i5", menuItemId: "5", name: "Pasta Primavera", quantity: 3, price: 16.99 },
+      { id: "i6", menuItemId: "6", name: "Chocolate Lava Cake", quantity: 3, price: 7.99 },
     ],
     total: 74.94,
   },
@@ -245,3 +247,66 @@ export const mockSurplusItems = [
     note: "Flash sale - last 5 items",
   },
 ]
+
+export const mockAuditLogs: AuditLog[] = [
+  {
+    id: "log-1",
+    createdAt: new Date(),
+    userId: "1",
+    action: "LOGIN",
+    resourceType: "USER",
+    resourceId: "1",
+    payload: { method: "credentials" },
+    ip: "192.168.1.1",
+    userAgent: "Mozilla/5.0...",
+    user: { name: "Admin User", email: "admin@rest.com", role: "ADMIN" }
+  },
+  {
+    id: "log-2",
+    createdAt: new Date(),
+    userId: "4",
+    action: "ORDER_STATUS_CHANGE",
+    resourceType: "ORDER",
+    resourceId: "ord-123",
+    payload: { oldStatus: "PENDING", newStatus: "PREPARING" },
+    ip: "192.168.1.45",
+    userAgent: "KDS-Tablet-v1",
+    user: { name: "Mike Kitchen", email: "kitchen@rest.com", role: "KITCHEN" }
+  },
+  {
+    id: "log-3",
+    createdAt: new Date(),
+    userId: "1",
+    action: "DELETE",
+    resourceType: "ORDER",
+    resourceId: "ord-456",
+    payload: { reason: "Customer walked out", items: ["Steak", "Wine"] },
+    ip: "192.168.1.1",
+    userAgent: "Chrome/Windows",
+    user: { name: "Admin User", email: "admin@rest.com", role: "ADMIN" }
+  },
+  {
+    id: "log-4",
+    createdAt: new Date(),
+    userId: "2",
+    action: "PAYMENT_SUCCESS",
+    resourceType: "BILL",
+    resourceId: "bill-789",
+    payload: { amount: 150.50, method: "CARD" },
+    ip: "192.168.1.20",
+    userAgent: "POS-Terminal-Main",
+    user: { name: "John Cashier", email: "cashier@rest.com", role: "CASHIER" }
+  },
+  {
+    id: "log-5",
+    createdAt: new Date(),
+    userId: "3",
+    action: "UPDATE",
+    resourceType: "RESERVATION",
+    resourceId: "res-001",
+    payload: { guestCount: "Changed from 2 to 4" },
+    ip: "192.168.1.12",
+    userAgent: "iPad-Waiter-App",
+    user: { name: "Sarah Waiter", email: "waiter@rest.com", role: "WAITER" }
+  }
+];

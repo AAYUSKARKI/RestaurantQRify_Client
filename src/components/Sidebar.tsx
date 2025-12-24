@@ -10,6 +10,7 @@ import {
   ChefHat,
   Settings,
   LogOut,
+  Logs,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useAppDispatch, useAppSelector } from "@/store/hooks"
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Kitchen", href: "/kitchen", icon: ChefHat, roles: ["ADMIN", "KITCHEN"] },
   { name: "Bills", href: "/bills", icon: Receipt, roles: ["ADMIN", "CASHIER"] },
   { name: "Reservations", href: "/reservations", icon: Calendar, roles: ["ADMIN", "WAITER"] },
+  { name: "Audit Log", href: "/auditlog", icon: Logs, roles: ["ADMIN"] },
   { name: "Settings", href: "/settings", icon: Settings, roles: ["ADMIN"] },
 ]
 
