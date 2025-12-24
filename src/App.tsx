@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from '@/pages/Home';
 import { useAppDispatch, useAppSelector } from './store/hooks';
 import type { RootState } from './store';
-import { getMe } from './store/authSlice';
+import { getMe } from './store/slices/authSlice';
 import { useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import DashboardLayout from '@/components/dashboard/DashboardLayout';
