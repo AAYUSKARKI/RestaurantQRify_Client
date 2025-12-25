@@ -1,5 +1,17 @@
 import { configureStore as ConfigureStore, combineReducers } from "@reduxjs/toolkit"
 import authReducer from "@/store/slices/authSlice";
+import categoryReducer from "@/store/slices/categorySlice";
+import menuItemReducer from "@/store/slices/menuItemSlice";
+import tableReducer from "@/store/slices/tableSlice";
+import reservationReducer from "@/store/slices/reservationSlice";
+import orderReducer from "@/store/slices/orderSlice";
+import allergenReducer from "@/store/slices/allergenSlice";
+import menuItemAllergenReducer from "@/store/slices/menuItemAllergenSlice";
+import billReducer from "@/store/slices/billSlice";
+import surplusReducer from "@/store/slices/surplusSlice";
+import kdsReducer from "@/store/slices/kdsSlice";
+import auditLogReducer from "@/store/slices/auditLogSlice";
+import healthReducer from "@/store/slices/healthSlice";
 import {
   persistReducer,
   FLUSH,
@@ -23,6 +35,18 @@ const persistedAuthReducer = persistReducer(userPersistConfig, authReducer);
 
 const rootReducer = combineReducers({
   auth: persistedAuthReducer,
+  category: categoryReducer,
+  menuItem: menuItemReducer,
+  table: tableReducer,
+  reservation: reservationReducer,
+  order: orderReducer,
+  allergen: allergenReducer,
+  menuItemAllergen: menuItemAllergenReducer,
+  bill: billReducer,
+  surplus: surplusReducer,
+  kds: kdsReducer,
+  auditLog: auditLogReducer,
+  health: healthReducer,
 });
 
 // Configure the store

@@ -17,12 +17,16 @@ import BillsPage from './components/bills/bills';
 import ReservationsPage from './components/reservations/reservations';
 import SettingsPage from './components/settings/settings';
 import AuditLogPage from './components/auditlogs/auditlogs';
+import HealthDashboard from './components/health/health';
+import Unauthorized from './pages/Unauthorized';
+
 function App() {
   const dispatch = useAppDispatch();
   const { user, loading } = useAppSelector((state: RootState) => state.auth);
 
   useEffect(() => {
     if (user) {
+      console.log(user)
       dispatch(getMe());
     }
   }, [dispatch]);
@@ -36,6 +40,7 @@ function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/unauthorized" element={<Unauthorized />} />
         <Route path="/" element={
           <ProtectedRoute>
             <Home />
@@ -79,6 +84,11 @@ function App() {
         <Route path="/auditlog" element={
           <ProtectedRoute>
             <AuditLogPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/health" element={
+          <ProtectedRoute>
+            <HealthDashboard />
           </ProtectedRoute>
         } />
         <Route path="/settings" element={

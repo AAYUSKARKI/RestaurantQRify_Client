@@ -1,16 +1,40 @@
+export type  PaymentMode = "CASH" | "CARD" | "OTHER";
+export type  DiscountType = "PERCENTAGE" | "FIXED";
+
 export interface Bill {
-  id: string;
-  orderId: string;
-  generatedAt: Date | string;
-  generatedBy: string;
-  subTotal: number;
-  discountValue: number;
-  discountType: "PERCENTAGE" | "FIXED";
-  serviceCharge: number;
-  taxPct: number;
-  taxAmount: number;
-  grandTotal: number;
-  paymentMode: "CASH" | "CARD" | "OTHER";
-  isPaid: boolean;
-  paidAt: Date | null;
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+    orderId: string;
+    generatedAt: string;
+    generatedBy: string;
+    subTotal: number;
+    discountValue: number;
+    discountType: DiscountType;
+    serviceCharge: number;
+    taxPct: number;
+    taxAmount: number;
+    grandTotal: number;
+    paymentMode: PaymentMode;
+    paidAt: string | null;
+    isPaid: boolean;
+    pdfUrl: string | null;
+    invoiceSent: boolean;
+    order?: any; // Nested OrderResponse
+}
+
+export interface BillState {
+    bills: Bill[];
+    selectedBill: Bill | null;
+    dailyReport: any | null;
+    loading: boolean;
+    error: string | null;
+}
+
+export interface CreateBillRequest {
+    orderId: string;
+    discountValue: number;
+    discountType: DiscountType;
+    paymentMode: PaymentMode;
 }

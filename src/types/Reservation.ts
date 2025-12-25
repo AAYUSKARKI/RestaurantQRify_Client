@@ -1,13 +1,33 @@
+import type { Table } from "./Table";
+
+export type ReservationStatus = "ACTIVE" | "NO_SHOW" | "CANCELLED" | "COMPLETED";
+
 export interface Reservation {
     id: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
     tableId: string;
     guestName: string;
-    guestPhone: string;
+    guestPhone: string | null;
     guests: number;
     status: ReservationStatus;
-    reservedAt: Date;
-    reservedUntil: Date;
+    reservedAt: string;
+    reservedUntil: string;
     durationMin: number;
+    cancelledAt: string | null;
+    completedAt: string | null;
+    table?: Table
 }
 
-export type ReservationStatus = "ACTIVE" | "CANCELLED" | "NO_SHOW" | "COMPLETED"
+export interface ReservationState {
+    reservations: Reservation[];
+    loading: boolean;
+    error: string | null;
+}
+
+export interface ReservationResponse {
+    success: boolean;
+    message: string;
+    data: Reservation | Reservation[];
+}

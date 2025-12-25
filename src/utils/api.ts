@@ -37,6 +37,13 @@ api.interceptors.response.use(
     async (error: AxiosError) => {
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
+        // If error is 403 (Forbidden)
+        if (error.response?.status === 403) {
+            // The server knows the user but the user's role is insufficient
+            window.location.href = "/unauthorized"; 
+            return Promise.reject(error);
+        }
+
         // If error is 401 (Unauthorized) and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (isRefreshing) {
