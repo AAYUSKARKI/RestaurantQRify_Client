@@ -5,7 +5,7 @@ export interface MenuItem {
     deletedAt: string | null;
     name: string;
     description: string | null;
-    price: number | string; 
+    price: number;
     imageUrl: string | null;
     isAvailable: boolean;
     isVeg: boolean;
@@ -24,4 +24,14 @@ export interface MenuItemResponse {
     success: boolean;
     message: string;
     data: MenuItem | MenuItem[];
+}
+
+export interface newMenuItem {
+    name: string;
+    description: string;
+    price: number;
+    isAvailable: boolean;
+    isVeg: boolean;
+    categoryId: string;
+    menuImage : File | null
 }

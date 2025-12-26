@@ -12,6 +12,14 @@ export interface User {
     forgotPasswordTokenExpiresAt: Date | null;
 }
 
+export interface RegisterUser {
+    name: string;
+    email: string;
+    password: string;
+    role: Roles
+    isActive: boolean
+}
+
 export interface LoginUser {
     email: string;
     password: string;

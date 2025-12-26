@@ -116,7 +116,7 @@ export const getMe = createAsyncThunk<User, void, { rejectValue: string }>(
     "auth/getMe",
     async (_, { rejectWithValue }) => {
         try {
-            const response = await api.get<{ data: User }>(`"/user/me"`); // Corrected endpoint to match your /api/user/{id} pattern or profile
+            const response = await api.get<{ data: User }>("/user/me"); // Corrected endpoint to match your /api/user/{id} pattern or profile
             return response.data.data;
         } catch (error: any) {
             return rejectWithValue("Session expired");

@@ -52,12 +52,26 @@ import {
 } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
 import type { AuditLog } from "@/types/Auditlog"
-import { mockAuditLogs } from "@/lib/mock-data"
 import { Sidebar } from "../Sidebar"
-
-const MOCK_LOGS: AuditLog[] = mockAuditLogs
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchAuditLogs } from "@/store/slices/auditLogSlice"
+import type { RootState } from "@/store"
 
 export default function AuditLogPage() {
+    const dispatch = useAppDispatch();
+    const { loading, error, logs } = useAppSelector((state: RootState) => state.auditLog);
+   console.log(loading,error,logs)
+     React.useEffect(() => {
+        dispatch(fetchAuditLogs());
+    
+        const interval = setInterval(() => {
+          if (document.visibilityState === "visible" && !loading) {
+            dispatch(fetchAuditLogs());
+          }
+        }, 30000);
+    
+        return () => clearInterval(interval);
+      }, [dispatch]); 
   // --- STATE ---
   const [searchTerm, setSearchTerm] = React.useState("")
   const [selectedAction, setSelectedAction] = React.useState<string>("ALL")
@@ -81,7 +95,7 @@ export default function AuditLogPage() {
 
   // --- FILTERING LOGIC ---
   const filteredLogs: AuditLog[] = React.useMemo(() => {
-    return MOCK_LOGS.filter((log) => {
+    return logs.filter((log) => {
       const matchesSearch = 
         !searchTerm ||
         log.resourceId?.toLowerCase().includes(searchTerm.toLowerCase()) ||

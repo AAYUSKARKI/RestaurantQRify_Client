@@ -1,7 +1,7 @@
 export type CartItem = {
   menuItemId: string
   name: string
-  price: number
+  price:  number
   qty: number
   notes?: string
   isVeg: boolean

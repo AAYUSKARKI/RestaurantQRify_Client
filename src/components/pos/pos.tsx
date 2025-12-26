@@ -1,26 +1,55 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { Sidebar } from "../Sidebar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { mockMenuItems, mockCategories, mockTables, mockSurplusItems } from "@/lib/mock-data"
+// import { mockMenuItems, mockCategories, mockTables, mockSurplusItems } from "@/lib/mock-data"
 import { Plus, Minus, ShoppingCart, Trash2, Leaf, Search, Tag, Send } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { fetchMenuItems } from "@/store/slices/menuItemSlice"
+import { fetchDailySpecials } from "@/store/slices/surplusSlice"
+import { fetchTables } from "@/store/slices/tableSlice"
+import { fetchCategories } from "@/store/slices/categorySlice"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import toast from "react-hot-toast"
 import type { CartItem } from "@/types/Cart"
 
 export default function POSPage() {
+  const dispatch = useAppDispatch();
   const [selectedTable, setSelectedTable] = useState("")
   const [cart, setCart] = useState<CartItem[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("all")
 
-  const addToCart = (item: (typeof mockMenuItems)[0]) => {
+  const menuItems = useAppSelector((state) => state.menuItem.items)
+  const dailySpecials = useAppSelector((state) => state.surplus.dailySpecials)
+  const tables = useAppSelector((state) => state.table.tables)
+  const categories = useAppSelector((state) => state.category.categories)
+
+  React.useEffect(() => {
+    dispatch(fetchMenuItems())
+    dispatch(fetchDailySpecials())
+    dispatch(fetchTables())
+    dispatch(fetchCategories())
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        dispatch(fetchMenuItems())
+        dispatch(fetchDailySpecials())
+        dispatch(fetchTables())
+        dispatch(fetchCategories())
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [dispatch]);
+
+  const addToCart = (item: (typeof menuItems)[0]) => {
     const existingItem = cart.find((c) => c.menuItemId === item.id)
     if (existingItem) {
       setCart(cart.map((c) => (c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c)))
@@ -78,13 +107,13 @@ export default function POSPage() {
   const tax = subtotal * 0.13
   const total = subtotal + tax
 
-  const filteredItems = mockMenuItems.filter((item) => {
+  const filteredItems = menuItems.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === "all" || item.categoryId === selectedCategory
     return matchesSearch && matchesCategory && item.isAvailable
   })
 
-  const surplusItemIds = mockSurplusItems.map((s) => s.menuItemId)
+  const surplusItemIds = dailySpecials.map((s) => s.menuItemId)
 
   return (
     <div className="flex h-screen">
@@ -108,7 +137,7 @@ export default function POSPage() {
                   <SelectValue placeholder="Select table" />
                 </SelectTrigger>
                 <SelectContent>
-                  {mockTables.map((table) => (
+                  {tables.map((table) => (
                     <SelectItem key={table.id} value={table.id}>
                       {table.name} ({table.seats} seats)
                     </SelectItem>
@@ -121,7 +150,7 @@ export default function POSPage() {
           <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="all">All Items</TabsTrigger>
-              {mockCategories.map((cat) => (
+              {categories.map((cat) => (
                 <TabsTrigger key={cat.id} value={cat.id}>
                   {cat.name}
                 </TabsTrigger>
@@ -132,7 +161,7 @@ export default function POSPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {filteredItems.map((item) => {
               const isSurplus = surplusItemIds.includes(item.id)
-              const surplusItem = mockSurplusItems.find((s) => s.menuItemId === item.id)
+              const surplusItem = dailySpecials.find((s) => s.menuItemId === item.id)
               const discountedPrice = isSurplus
                 ? item.price * (1 - Number(surplusItem?.discountPct || 0) / 100)
                 : item.price
@@ -167,11 +196,11 @@ export default function POSPage() {
                     <div className="flex items-center gap-2">
                       {isSurplus ? (
                         <>
-                          <p className="text-lg font-bold text-foreground">${discountedPrice.toFixed(2)}</p>
-                          <p className="text-sm text-muted-foreground line-through">${item.price.toFixed(2)}</p>
+                          <p className="text-lg font-bold text-foreground">${discountedPrice}</p>
+                          <p className="text-sm text-muted-foreground line-through">${item.price}</p>
                         </>
                       ) : (
-                        <p className="text-lg font-bold text-foreground">${item.price.toFixed(2)}</p>
+                        <p className="text-lg font-bold text-foreground">${item.price}</p>
                       )}
                     </div>
                   </CardContent>
@@ -189,7 +218,7 @@ export default function POSPage() {
             </h2>
             {selectedTable && (
               <p className="text-sm text-muted-foreground mt-1">
-                {mockTables.find((t) => t.id === selectedTable)?.name}
+                {tables.find((t) => t.id === selectedTable)?.name}
               </p>
             )}
           </div>
@@ -211,7 +240,7 @@ export default function POSPage() {
                           {item.name}
                           {item.isVeg && <Leaf className="h-3 w-3 text-chart-2" />}
                         </p>
-                        <p className="text-sm text-muted-foreground mt-0.5">${item.price.toFixed(2)} each</p>
+                        <p className="text-sm text-muted-foreground mt-0.5">${Number(item.price)} each</p>
                       </div>
                       <Button
                         variant="ghost"
@@ -246,7 +275,7 @@ export default function POSPage() {
                         <Plus className="h-3 w-3" />
                       </Button>
                       <span className="ml-auto font-semibold text-foreground">
-                        ${(item.price * item.qty).toFixed(2)}
+                        ${(Number(item.price) * item.qty).toFixed(2)}
                       </span>
                     </div>
                   </div>

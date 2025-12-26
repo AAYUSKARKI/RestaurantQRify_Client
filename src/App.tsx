@@ -1,11 +1,9 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from '@/pages/Home';
-import { useAppDispatch, useAppSelector } from './store/hooks';
-import type { RootState } from './store';
+import { useAppDispatch } from './store/hooks';
 import { getMe } from './store/slices/authSlice';
 import { useEffect } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { LoadingOverlay } from '@/components/ui/LoadingOverlay';
 import { Login } from './components/auth/Login';
 import Register from './components/auth/Register';
 import DashboardPage from './components/dashboard/Dashboard';
@@ -18,22 +16,16 @@ import ReservationsPage from './components/reservations/reservations';
 import SettingsPage from './components/settings/settings';
 import AuditLogPage from './components/auditlogs/auditlogs';
 import HealthDashboard from './components/health/health';
+import AddStaffPage from './components/auth/Register';
+import ManageStaff from './components/staff/Staff';
 import Unauthorized from './pages/Unauthorized';
 
 function App() {
   const dispatch = useAppDispatch();
-  const { user, loading } = useAppSelector((state: RootState) => state.auth);
 
-  useEffect(() => {
-    if (user) {
-      console.log(user)
-      dispatch(getMe());
-    }
-  }, [dispatch]);
-
-  if (loading) {
-    return <LoadingOverlay />
-  }
+  // useEffect(() => {
+  //     dispatch(getMe());
+  // }, [dispatch]);
 
   return (
     <Router>
@@ -84,6 +76,16 @@ function App() {
         <Route path="/auditlog" element={
           <ProtectedRoute>
             <AuditLogPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/addstaff" element={
+          <ProtectedRoute>
+            <AddStaffPage />
+          </ProtectedRoute>
+        } />
+        <Route path="/managestaff" element={
+          <ProtectedRoute>
+            <ManageStaff />
           </ProtectedRoute>
         } />
         <Route path="/health" element={

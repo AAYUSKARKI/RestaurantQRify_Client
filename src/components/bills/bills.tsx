@@ -1,12 +1,11 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Sidebar } from "../Sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
-import { useAppSelector } from "@/store/hooks"
+import { useAppSelector, useAppDispatch } from "@/store/hooks"
 import { Label } from "@/components/ui/label"
-import { mockOrders, mockTables, mockMenuItems, mockBills } from "@/lib/mock-data"
 import { Receipt, CreditCard, Banknote, DollarSign, FileText, Check, Download } from "lucide-react"
 import {
     Dialog,
@@ -16,17 +15,23 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import { createBill, fetchBills, payBill } from "@/store/slices/billSlice"
+import { fetchOrders } from "@/store/slices/orderSlice"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import toast from "react-hot-toast"
 import type { RootState } from "@/store"
-import type { Bill } from "@/types/Bill"
+import type { CreateBill } from "@/types/Bill"
 
 type PaymentMode = "CASH" | "CARD" | "OTHER"
 type DiscountType = "PERCENTAGE" | "FIXED"
 
 export default function BillsPage() {
-    const { user } = useAppSelector((state: RootState) => state.auth)
-    const [bills, setBills] = useState<Bill[]>(mockBills as unknown as Bill[])
+    const dispatch = useAppDispatch()
+    const { orders } = useAppSelector((state: RootState) => state.order)
+    const { bills } = useAppSelector((state: RootState) => state.bill)
+    const { tables } = useAppSelector((state: RootState) => state.table)
+    const { items: menuItems } = useAppSelector((state: RootState) => state.menuItem)
+
     const [isGenerateDialogOpen, setIsGenerateDialogOpen] = useState(false)
     const [selectedOrder, setSelectedOrder] = useState("")
     const [billDetails, setBillDetails] = useState({
@@ -37,52 +42,47 @@ export default function BillsPage() {
         paymentMode: "CASH" as PaymentMode,
     })
 
-    const unbilledOrders = mockOrders.filter((o) => !bills.find((b) => b.orderId === o.id) && o.status === "READY")
+    const unbilledOrders = orders.filter((o) => !bills.find((b) => b.orderId === o.id) && o.status === "READY")
 
+  useEffect(() => {
+      dispatch(fetchBills())
+      dispatch(fetchOrders())
+      const interval = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          dispatch(fetchBills())
+          dispatch(fetchOrders())
+        }
+      }, 30000)
+  
+      return () => clearInterval(interval)
+    }, [dispatch])
     const generateBill = () => {
         if (!selectedOrder) {
             toast.error("Please select an order")
             return
         }
 
-        const order = mockOrders.find((o) => o.id === selectedOrder)
-        if (!order) return
-
-        const subTotal = order.items.reduce((sum, item) => sum + (item.quantity * item.price), 0)
-
-        const discountAmount =
-            billDetails.discountType === "PERCENTAGE"
-                ? subTotal * (billDetails.discountValue / 100)
-                : billDetails.discountValue
-        const afterDiscount = subTotal - discountAmount
-        const taxAmount = afterDiscount * (billDetails.taxPct / 100)
-        const grandTotal = afterDiscount + taxAmount + billDetails.serviceCharge
-
-        const newBill: Bill = {
-            id: (bills.length + 1).toString(),
-            orderId: selectedOrder,
-            generatedAt: new Date(),
-            generatedBy: user?.id || "1",
-            subTotal,
-            discountValue: billDetails.discountValue,
-            discountType: billDetails.discountType,
-            serviceCharge: billDetails.serviceCharge,
-            taxPct: billDetails.taxPct,
-            taxAmount,
-            grandTotal,
-            paymentMode: billDetails.paymentMode,
-            isPaid: false,
-            paidAt: null,
+        const order = orders.find((o) => o.id === selectedOrder)
+        if (!order) {
+            toast.error("Order not found")
+            return
         }
 
-        setBills([...bills, newBill])
+        const newBill: CreateBill = {
+            orderId: selectedOrder,
+            discountValue: billDetails.discountValue,
+            discountType: billDetails.discountType,
+            paymentMode: billDetails.paymentMode,
+        }
+
+        dispatch(createBill(newBill))
         setIsGenerateDialogOpen(false)
         setSelectedOrder("")
         toast.success("Bill has been generated")
     }
 
     const markAsPaid = (billId: string) => {
-        setBills(bills.map((b) => (b.id === billId ? { ...b, isPaid: true, paidAt: new Date() } : b)))
+        dispatch(payBill(billId))
         toast.success("Bill has been marked as paid")
     }
 
@@ -120,7 +120,7 @@ export default function BillsPage() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {unbilledOrders.map((order) => {
-                                                    const table = mockTables.find((t) => t.id === order.tableId)
+                                                    const table = tables.find((t) => t.id === order.tableId)
                                                     return (
                                                         <SelectItem key={order.id} value={order.id}>
                                                             {table?.name} - {order.placedBy}
@@ -138,17 +138,17 @@ export default function BillsPage() {
                                             </CardHeader>
                                             <CardContent>
                                                 <div className="space-y-2">
-                                                    {mockOrders
+                                                    {orders
                                                         .find((o) => o.id === selectedOrder)
                                                         ?.items.map((item) => {
-                                                            const menuItem = mockMenuItems.find((m) => m.id === item.menuItemId)
+                                                            const menuItem = menuItems.find((m) => m.id === item.menuItemId)
                                                             return (
                                                                 <div key={item.id} className="flex justify-between text-sm">
                                                                     <span className="text-foreground">
-                                                                        {item.quantity}x {menuItem?.name} {/* item.qty -> item.quantity */}
+                                                                        {item.qty}x {menuItem?.name} {/* item.qty -> item.quantity */}
                                                                     </span>
                                                                     <span className="font-medium text-foreground">
-                                                                        ${(item.quantity * item.price).toFixed(2)} {/* item.subTotal -> calculation */}
+                                                                        ${(item.qty * item.unitPrice).toFixed(2)} {/* item.subTotal -> calculation */}
                                                                     </span>
                                                                 </div>
                                                             )
@@ -285,8 +285,8 @@ export default function BillsPage() {
                         <CardContent>
                             <div className="space-y-4">
                                 {bills.map((bill) => {
-                                    const order = mockOrders.find((o) => o.id === bill.orderId)
-                                    const table = mockTables.find((t) => t.id === order?.tableId)
+                                    const order = orders.find((o) => o.id === bill.orderId)
+                                    const table = tables.find((t) => t.id === order?.tableId)
                                     return (
                                         <div
                                             key={bill.id}

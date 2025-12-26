@@ -7,7 +7,7 @@ export interface Bill {
     updatedAt: string;
     deletedAt: string | null;
     orderId: string;
-    generatedAt: string;
+    generatedAt: Date;
     generatedBy: string;
     subTotal: number;
     discountValue: number;
@@ -22,6 +22,13 @@ export interface Bill {
     pdfUrl: string | null;
     invoiceSent: boolean;
     order?: any; // Nested OrderResponse
+}
+
+export interface CreateBill {
+    orderId: string;
+    discountValue: number;
+    discountType: DiscountType;
+    paymentMode: PaymentMode;
 }
 
 export interface BillState {

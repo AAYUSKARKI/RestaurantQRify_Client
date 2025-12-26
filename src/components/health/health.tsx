@@ -1,26 +1,36 @@
 import * as React from "react";
-import { 
-  Activity, Database, Cpu, MemoryStick, RefreshCw, 
-  CheckCircle2, AlertTriangle, Clock, HardDrive 
+import {
+  Activity, Database, Cpu, MemoryStick, RefreshCw,
+  CheckCircle2, AlertTriangle, Clock, HardDrive, Info
 } from "lucide-react";
 import { format } from "date-fns";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { startHealthPolling } from "@/store/slices/healthSlice";
+import { checkSystemHealth } from "@/store/slices/healthSlice";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Sidebar } from "../Sidebar";
 
 export default function HealthDashboard() {
   const dispatch = useAppDispatch();
-  const { status,error, loading, lastChecked } = useAppSelector(
+  const { status, error, loading, lastChecked } = useAppSelector(
     (state) => state.health
   );
 
   React.useEffect(() => {
-    dispatch(startHealthPolling());
-  }, [dispatch]);
+    dispatch(checkSystemHealth());
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible" && !loading) {
+        dispatch(checkSystemHealth());
+      }
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [dispatch, loading]); // Added loading to deps to recreate interval if needed, but generally stable
 
   const metrics = React.useMemo(() => {
     if (!status) return null;
@@ -37,164 +47,194 @@ export default function HealthDashboard() {
 
   if (loading && !status) {
     return (
-      <div className="flex h-64 w-full flex-col items-center justify-center gap-4">
-        <RefreshCw className="h-10 w-10 animate-spin text-primary" />
-        <p className="animate-pulse text-sm text-muted-foreground">Initializing System Monitor...</p>
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 bg-background">
+        <RefreshCw className="h-12 w-12 animate-spin text-primary" />
+        <p className="animate-pulse text-base text-muted-foreground">Initializing System Health Monitor...</p>
       </div>
     );
   }
 
-  if (!status) return null;
+  if (!status) return <div className="flex h-screen items-center justify-center"><h1 className="text-2xl font-bold text-muted-foreground">No Data Available</h1></div>;
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">System Health</h2>
-          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4" />
-            <span>Last Updated: {lastChecked ? format(lastChecked, "HH:mm:ss") : "Never"}</span>
-            {error && <Badge variant="destructive" className="ml-2 animate-pulse">Sync Failed</Badge>}
+    <div className="flex h-screen bg-background">
+      <Sidebar />
+      <main className="flex-1 overflow-y-auto p-6 md:p-8">
+        <div className="mx-auto max-w-7xl space-y-8 animate-in fade-in duration-500">
+          <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-3xl font-bold tracking-tight">System Health Overview</h2>
+              <div className="mt-2 flex items-center gap-3 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Last Updated: {lastChecked ? format(lastChecked, "PPP HH:mm:ss") : "Never"}</span>
+                {error && (
+                  <Tooltip>
+                    <TooltipTrigger>
+                      <Badge variant="destructive" className="ml-2 animate-pulse cursor-help">Sync Failed</Badge>
+                    </TooltipTrigger>
+                    <TooltipContent>{error}</TooltipContent>
+                  </Tooltip>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => dispatch(checkSystemHealth())}
+              disabled={loading}
+              className="w-full sm:w-auto transition-all hover:bg-primary/5"
+            >
+              <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
+              Refresh Now
+            </Button>
+          </header>
+
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard
+              title="Database Status"
+              value="PostgreSQL"
+              icon={<Database className="h-5 w-5" />}
+              subtext={`Latency: ${status.checks.database.responseTime}ms`}
+              badge={status.checks.database.status.toUpperCase()}
+              status={status.checks.database.status === 'up' ? 'success' : 'danger'}
+              tooltip="Database connection and query performance"
+            />
+
+            <StatCard
+              title="System Uptime"
+              value={`${metrics?.uptime} hours`}
+              icon={<Activity className="h-5 w-5" />}
+              subtext="Continuous operation time"
+              tooltip="Time since last system restart or process start"
+            />
+
+            <StatCard
+              title="CPU Load"
+              value={`${status.system.cpuUsage.user.toFixed(1)}%`}
+              icon={<Cpu className="h-5 w-5" />}
+              badge={status.system.cpuStatus.toUpperCase()}
+              status={status.system.cpuStatus === 'stable' ? 'success' : 'warning'}
+              tooltip="Current CPU utilization across user processes"
+            />
+
+            <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-3">
+                <CardTitle className="text-sm font-bold uppercase text-muted-foreground">Memory Usage</CardTitle>
+                <Tooltip>
+                  <TooltipTrigger><MemoryStick className="h-5 w-5 text-muted-foreground cursor-help" /></TooltipTrigger>
+                  <TooltipContent>System memory allocation details</TooltipContent>
+                </Tooltip>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <span className="text-3xl font-bold">{metrics?.memPercentage.toFixed(1)}%</span>
+                  <Badge variant="secondary" className="capitalize">{status.system.memoryStatus}</Badge>
+                </div>
+                <Progress value={metrics?.memPercentage} className="mt-4 h-2 rounded-full"/>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card className="overflow-hidden shadow-md">
+              <CardHeader className="bg-muted/50">
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <HardDrive className="h-6 w-6 text-primary" /> Advanced Memory Metrics
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-4">
+                <DetailRow label="Heap Used" value={`${metrics?.memUsed} MB`} tooltip="Memory currently in use by the application" />
+                <DetailRow label="Heap Total" value={`${metrics?.memTotal} MB`} tooltip="Total allocated heap memory" />
+                <DetailRow label="RSS (Physical)" value={`${metrics?.rss} MB`} tooltip="Resident Set Size - physical memory usage" />
+              </CardContent>
+            </Card>
+
+            <Card className="overflow-hidden shadow-md">
+              <CardHeader className="bg-muted/50">
+                <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                  <Info className="h-6 w-6 text-primary" /> System Status Summary
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col items-center justify-center p-8 text-center">
+                {status.checks.database.status === "up" && !error ? (
+                  <div className="space-y-4">
+                    <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100 ring-4 ring-green-50">
+                      <CheckCircle2 className="h-8 w-8 text-green-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-green-700">All Systems Operational</h3>
+                    <p className="text-base text-muted-foreground max-w-md">
+                      Your infrastructure is performing optimally. No anomalies detected in core components.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-red-100 ring-4 ring-red-50">
+                      <AlertTriangle className="h-8 w-8 text-red-600" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-red-700">System Alert</h3>
+                    <p className="text-base text-muted-foreground max-w-md">
+                      {error || status.checks.database.error || "Potential issue detected. Please check connections and logs."}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-        <Button 
-          variant="outline" 
-          onClick={() => dispatch(startHealthPolling())} 
-          disabled={loading}
-          className="w-full sm:w-auto"
-        >
-          <RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />
-          Force Sync
-        </Button>
-      </header>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {/* Database Status */}
-        <StatCard 
-          title="Database" 
-          value="PostgreSQL" 
-          icon={<Database className="h-4 w-4" />}
-          subtext={`Latency: ${status.checks.database.responseTime}`}
-          badge={status.checks.database.status.toUpperCase()}
-          status={status.checks.database.status === 'up' ? 'success' : 'danger'}
-        />
-
-        {/* Uptime */}
-        <StatCard 
-          title="Uptime" 
-          value={`${metrics?.uptime} hrs`} 
-          icon={<Activity className="h-4 w-4" />}
-          subtext="Current session duration"
-        />
-
-        {/* CPU Load */}
-        <StatCard 
-          title="CPU Usage" 
-          value={`${status.system.cpuUsage.user.toFixed(1)}%`} 
-          icon={<Cpu className="h-4 w-4" />}
-          badge={status.system.cpuStatus}
-          status={status.system.cpuStatus === 'stable' ? 'success' : 'warning'}
-        />
-
-        {/* Memory Usage */}
-        <Card className="shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-bold uppercase text-muted-foreground">Memory</CardTitle>
-            <MemoryStick className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-bold">{metrics?.memPercentage.toFixed(1)}%</span>
-              <Badge variant="outline" className="capitalize">{status.system.memoryStatus}</Badge>
-            </div>
-            <Progress value={metrics?.memPercentage} className="mt-3 h-1.5" />
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <HardDrive className="h-5 w-5 text-primary" /> Memory Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <DetailRow label="Heap Used" value={`${metrics?.memUsed} MB`} />
-            <DetailRow label="Heap Total" value={`${metrics?.memTotal} MB`} />
-            <DetailRow label="RSS (Physical)" value={`${metrics?.rss} MB`} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Overall Status</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
-            {status.checks.database.status === "up" ? (
-              <div className="space-y-3">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-                  <CheckCircle2 className="h-6 w-6 text-emerald-600" />
-                </div>
-                <h3 className="text-lg font-bold">Systems Operational</h3>
-                <p className="text-sm text-muted-foreground max-w-70">
-                  Infrastructure is running smoothly. No issues detected in backend or database.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
-                  <AlertTriangle className="h-6 w-6 text-red-600" />
-                </div>
-                <h3 className="text-lg font-bold text-red-600">Connectivity Issue</h3>
-                <p className="text-sm text-muted-foreground">
-                  {status.checks.database.error || "Failed to communicate with the database."}
-                </p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      </main>
     </div>
   );
 }
 
 // --- Reusable Sub-components ---
 
-function StatCard({ title, value, icon, subtext, badge, status }: any) {
+function StatCard({ title, value, icon, subtext, badge, status, tooltip }: any) {
   const statusColors = {
-    success: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    warning: "bg-amber-50 text-amber-700 border-amber-200",
+    success: "bg-green-50 text-green-700 border-green-200",
+    warning: "bg-yellow-50 text-yellow-700 border-yellow-200",
     danger: "bg-red-50 text-red-700 border-red-200",
-    default: "bg-slate-50 text-slate-700 border-slate-200",
+    default: "bg-gray-50 text-gray-700 border-gray-200",
   };
 
-  return (
-    <Card className="shadow-sm">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-xs font-bold uppercase text-muted-foreground">{title}</CardTitle>
+  const content = (
+    <Card className="overflow-hidden shadow-md hover:shadow-lg transition-shadow">
+      <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <CardTitle className="text-sm font-bold uppercase text-muted-foreground">{title}</CardTitle>
         <div className="text-muted-foreground">{icon}</div>
       </CardHeader>
       <CardContent>
         <div className="flex items-center justify-between">
-          <div className="text-2xl font-bold">{value}</div>
+          <div className="text-3xl font-bold">{value}</div>
           {badge && (
-            <Badge variant="outline" className={cn("text-[10px]", statusColors[status as keyof typeof statusColors] || statusColors.default)}>
+            <Badge variant="outline" className={cn("text-xs px-2 py-1", statusColors[status as keyof typeof statusColors] || statusColors.default)}>
               {badge}
             </Badge>
           )}
         </div>
-        {subtext && <p className="mt-1 text-xs text-muted-foreground">{subtext}</p>}
+        {subtext && <p className="mt-2 text-sm text-muted-foreground">{subtext}</p>}
       </CardContent>
     </Card>
   );
+
+  return tooltip ? (
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  ) : content;
 }
 
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-mono text-sm font-medium">{value}</span>
+function DetailRow({ label, value, tooltip }: { label: string; value: string; tooltip?: string }) {
+  const content = (
+    <div className="flex items-center justify-between border-b pb-3 last:border-0 last:pb-0">
+      <span className="text-base text-muted-foreground">{label}</span>
+      <span className="font-mono text-base font-medium">{value}</span>
     </div>
   );
+
+  return tooltip ? (
+    <Tooltip>
+      <TooltipTrigger asChild>{content}</TooltipTrigger>
+      <TooltipContent>{tooltip}</TooltipContent>
+    </Tooltip>
+  ) : content;
 }

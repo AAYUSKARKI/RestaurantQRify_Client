@@ -8,7 +8,7 @@ export interface OrderItem {
     orderId: string;
     menuItemId: string;
     qty: number;
-    unitPrice: number; // API sends Decimal as number or string
+    unitPrice: number; 
     subTotal: number;
     notes: string | null;
     payerName: string | null;

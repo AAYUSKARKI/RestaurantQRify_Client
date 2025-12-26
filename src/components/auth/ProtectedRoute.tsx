@@ -10,28 +10,16 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
-    const { user, loading } = useAppSelector((state: RootState) => state.auth);
-    const location = useLocation();
+  const { user } = useAppSelector((state: RootState) => state.auth);
+  const location = useLocation();
 
-    // 1. Handle Loading State
-    if (loading) {
-        return (
-            <div className="flex h-screen w-full items-center justify-center">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            </div>
-        );
-    }
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
-    // 2. Check Authentication
-    if (!user) {
-        // Redirect to login but save the current location to redirect back after login
-        return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/unauthorized" replace />;
+  }
 
-    // 3. Check Role Authorization
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-        return <Navigate to="/unauthorized" replace />;
-    }
-
-    return <>{children}</>;
+  return children;
 };

@@ -1,9 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Sidebar } from "../Sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { mockTables, mockUsers } from "@/lib/mock-data"
+import { mockUsers } from "@/lib/mock-data"
 import { Users, Clock, Sparkles, AlertCircle, QrCode, ExternalLink } from "lucide-react"
 import {
   Dialog,
@@ -14,26 +14,36 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Table, TableStatus } from "@/types/Table"
+import type { TableStatus } from "@/types/Table"
+import { fetchTables, updateTableStatus, assignWaiter } from "@/store/slices/tableSlice"
+import { useAppDispatch, useAppSelector } from "@/store/hooks"
 
 export default function TablesPage() {
-  const [tables, setTables] = useState<Table[]>(mockTables as Table[])
+  const dispatch = useAppDispatch()
+  const { tables } = useAppSelector((state) => state.table)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [qrTableId, setQrTableId] = useState<string>("")
 
 
-  const updateTableStatus = (tableId: string, status: TableStatus) => {
-    setTables((prev) => 
-      prev.map((t) => (t.id === tableId ? { ...t, status } : t))
-    );
+  useEffect(() => {
+      dispatch(fetchTables())
+      const interval = setInterval(() => {
+        if (document.visibilityState === "visible") {
+          dispatch(fetchTables())
+        }
+      }, 30000)
+  
+      return () => clearInterval(interval)
+    }, [dispatch])
+
+  const handleUpdateTableStatus = (tableId: string, status: TableStatus) => {
+    dispatch(updateTableStatus({ id: tableId, status }))
+    dispatch(fetchTables())
   };
 
- const assignWaiter = (tableId: string, waiterId: string) => {
-    const assignedTo = waiterId === "none" ? null : waiterId;
-    
-    setTables((prev) => 
-      prev.map((t) => (t.id === tableId ? { ...t, assignedTo } : t))
-    );
+ const handleAssignWaiter = (tableId: string, waiterId: string) => {
+    dispatch(assignWaiter({ id: tableId, userId: waiterId }))
+    dispatch(fetchTables())
   };
 
   const getStatusColor = (status: TableStatus) => {
@@ -194,7 +204,7 @@ export default function TablesPage() {
                                   <Button
                                     key={status}
                                     variant={table.status === status ? "default" : "outline"}
-                                    onClick={() => updateTableStatus(table.id, status)}
+                                    onClick={() => handleUpdateTableStatus(table.id, status)}
                                     className="justify-start"
                                   >
                                     {status.replace("_", " ")}
@@ -208,7 +218,7 @@ export default function TablesPage() {
                             <label className="text-sm font-medium">Assign Waiter</label>
                             <Select
                               value={table.assignedTo || ""}
-                              onValueChange={(value) => assignWaiter(table.id, value)}
+                              onValueChange={(value) => handleAssignWaiter(table.id, value)}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Select a waiter" />

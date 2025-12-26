@@ -35,6 +35,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     async (error: AxiosError) => {
+        console.log(error.response?.status)
         const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
         // If error is 403 (Forbidden)
@@ -43,6 +44,14 @@ api.interceptors.response.use(
             window.location.href = "/unauthorized"; 
             return Promise.reject(error);
         }
+
+        // If error is 401 (Unauthorized) and we have retried already
+        if (error.response?.status === 401) {
+            window.location.href = "/login";
+            return Promise.reject(error);
+        }
+
+        
 
         // If error is 401 (Unauthorized) and we haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
@@ -65,7 +74,7 @@ api.interceptors.response.use(
 
             try {
                 // Hit  refresh endpoint
-                const response = await axios.post(`${BASE_URL}/users/refresh`, {}, { withCredentials: true });
+                const response = await axios.post(`${BASE_URL}/user/refresh`, {}, { withCredentials: true });
                 
                 const { accessToken } = response.data.data;
                 localStorage.setItem("accessToken", accessToken);

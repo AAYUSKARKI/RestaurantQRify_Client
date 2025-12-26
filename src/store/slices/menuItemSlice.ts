@@ -24,11 +24,11 @@ export const fetchMenuItems = createAsyncThunk<MenuItem[], void, { rejectValue: 
     }
 );
 
-export const createMenuItem = createAsyncThunk<MenuItem, any, { rejectValue: string }>(
+export const createMenuItem = createAsyncThunk<MenuItem, FormData, { rejectValue: string }>(
     "menuItem/create",
-    async (data, { rejectWithValue }) => {
+    async (formData, { rejectWithValue }) => {
         try {
-            const response = await api.post<MenuItemResponse>("/menu-item", data);
+            const response = await api.post<MenuItemResponse>("/menu-item", formData);
             toast.success("Item created successfully");
             return response.data.data as MenuItem;
         } catch (error: any) {

@@ -9,33 +9,27 @@ const initialState: HealthState = {
   lastChecked: null,
 };
 
-let pollingStarted = false; 
 export const checkSystemHealth = createAsyncThunk<
   HealthData,
   void,
   { rejectValue: string }
->("health/check", async (_, { rejectWithValue }) => {
-  try {
-    const res = await api.get("/health-check");
-    return res.data.data;
-  } catch (err: any) {
-    return rejectWithValue(err?.response?.data?.message || "Health check failed");
-  }
-});
-
-export const startHealthPolling = createAsyncThunk(
-  "health/startPolling",
-  async (_, { dispatch }) => {
-    if (pollingStarted) return;
-    pollingStarted = true;
-
-    dispatch(checkSystemHealth());
-
-    setInterval(() => {
-      if (document.visibilityState === "visible") {
-        dispatch(checkSystemHealth());
+>(
+  "health/check",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await api.get("/health-check");
+      return res.data.data;
+    } catch (err: any) {
+      return rejectWithValue(err?.response?.data?.message || "Health check failed");
+    }
+  },
+  {
+    condition: (_, { getState }) => {
+      const { health } = getState() as { health: HealthState };
+      if (health.loading) {
+        return false;
       }
-    }, 30000);
+    },
   }
 );
 
@@ -47,6 +41,7 @@ const healthSlice = createSlice({
     builder
       .addCase(checkSystemHealth.pending, (state) => {
         if (!state.status) state.loading = true;
+        state.error = null;
       })
       .addCase(checkSystemHealth.fulfilled, (state, action) => {
         state.status = action.payload;
