@@ -5,6 +5,7 @@ import type { Table, TableState, TableResponse, TableStatus } from "@/types/Tabl
 
 const initialState: TableState = {
     tables: [],
+    table: null,
     loading: false,
     error: null,
 };
@@ -19,6 +20,18 @@ export const fetchTables = createAsyncThunk<Table[], void, { rejectValue: string
             return response.data.data;
         } catch (error: any) {
             return rejectWithValue(error.response?.data?.message || "Failed to fetch tables");
+        }
+    }
+);
+
+export const fetchTable = createAsyncThunk<Table, string, { rejectValue: string }>(
+    "table/fetch",
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.get<{ data: Table }>(`/table/${id}`);
+            return response.data.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || "Failed to fetch table");
         }
     }
 );
@@ -105,6 +118,10 @@ const tableSlice = createSlice({
             .addCase(fetchTables.fulfilled, (state, action) => {
                 state.loading = false;
                 state.tables = action.payload;
+            })
+            .addCase(fetchTable.fulfilled, (state, action) => {
+                state.loading = false;
+                state.table = action.payload;
             })
             .addCase(createTable.fulfilled, (state, action) => {
                 state.loading = false;

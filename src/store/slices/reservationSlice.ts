@@ -5,6 +5,7 @@ import type { Reservation, ReservationState, ReservationResponse } from "@/types
 
 const initialState: ReservationState = {
     reservations: [],
+    reservation: null,
     loading: false,
     error: null,
 };
@@ -22,6 +23,18 @@ export const fetchReservations = createAsyncThunk<Reservation[], void, { rejectV
         }
     }
 );
+
+export const fetchReservation = createAsyncThunk<Reservation, string, { rejectValue: string }>(
+    "reservation/fetch",
+    async (id, { rejectWithValue }) => {
+        try {
+            const response = await api.get<{ data: Reservation }>(`/reservation/${id}`);
+            return response.data.data;
+        } catch (error: any) {
+            return rejectWithValue(error.response?.data?.message || "Failed to fetch reservation");
+        }
+    }
+)
 
 export const createReservation = createAsyncThunk<Reservation, any, { rejectValue: string }>(
     "reservation/create",
@@ -84,6 +97,10 @@ const reservationSlice = createSlice({
             .addCase(fetchReservations.fulfilled, (state, action) => {
                 state.loading = false;
                 state.reservations = action.payload;
+            })
+            .addCase(fetchReservation.fulfilled, (state, action) => {
+                state.loading = false;
+                state.reservation = action.payload;
             })
             .addCase(createReservation.fulfilled, (state, action) => {
                 state.loading = false;

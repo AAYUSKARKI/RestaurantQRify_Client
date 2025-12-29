@@ -16,8 +16,8 @@ export function Login() {
     const [password, setPassword] = useState("")
     const dispatch = useAppDispatch()
     const navigate = useNavigate()
-
-    const { loading, error: reduxError } = useAppSelector((state: RootState) => state.auth);
+    const loading = false
+    const { error: reduxError } = useAppSelector((state: RootState) => state.auth);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

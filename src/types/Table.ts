@@ -10,12 +10,14 @@ export interface Table {
     name: string;
     seats: number;
     status: TableStatus;
+    qrCodeUrl: string | null;
     assignedTo: string | null;
     assignedWaiter?: User;
 }
 
 export interface TableState {
     tables: Table[];
+    table: Table | null;
     loading: boolean;
     error: string | null;
 }

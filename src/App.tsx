@@ -19,6 +19,9 @@ import HealthDashboard from './components/health/health';
 import AddStaffPage from './components/auth/Register';
 import ManageStaff from './components/staff/Staff';
 import Unauthorized from './pages/Unauthorized';
+import LandingPage from './pages/Landingpage';
+import { ModeToggle } from './components/mode-toggle';
+import NotFound from './pages/NotFound';
 
 function App() {
   const dispatch = useAppDispatch();
@@ -29,15 +32,17 @@ function App() {
 
   return (
     <Router>
+      {/* <ModeToggle /> */}
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
-        <Route path="/" element={
+        <Route path="/" element={<LandingPage />} />
+        {/* <Route path="/" element={
           <ProtectedRoute>
             <Home />
           </ProtectedRoute>
-        } />
+        } /> */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <DashboardPage />
@@ -98,6 +103,7 @@ function App() {
             <SettingsPage />
           </ProtectedRoute>
         } />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   )

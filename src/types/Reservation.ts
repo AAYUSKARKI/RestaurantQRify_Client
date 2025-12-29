@@ -22,6 +22,7 @@ export interface Reservation {
 
 export interface ReservationState {
     reservations: Reservation[];
+    reservation: Reservation | null;
     loading: boolean;
     error: string | null;
 }

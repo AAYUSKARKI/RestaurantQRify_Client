@@ -19,13 +19,20 @@ export interface SurplusMark {
 
 export interface DailySpecial {
     id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    deletedAt: Date | null;
+    menuItem: {
+        name: string;
+        description: string | null;
+        price: number;
+        imageUrl: string | null;
+    };
     menuItemId: string;
-    name: string;
-    originalPrice: number;
-    salePrice: number;
+    markedBy: string;
+    surplusAt: Date;
+    surplusUntil: Date;
     discountPct: number;
-    endsAt: string;
-    imageUrl: string | null;
     note: string | null;
 }
 

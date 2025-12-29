@@ -11,6 +11,15 @@ export interface MenuItem {
     isVeg: boolean;
     categoryId: string;
     category?: any;
+    surplusMarks?: {
+        discountPct: number;
+    }[],
+    allergens? : {
+        allergen: {
+            id: string;
+            name: string;
+        }
+    }[];
 }
 
 export interface MenuItemState {
